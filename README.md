@@ -26,9 +26,9 @@ I used postman to do api documentation. Click the link below to view the api doc
 ### 1. Clone the repository:
 
 ```
-git clone
+git clone https://github.com/modasser-nayem/match-mate-server-p13.git
 
-cd
+cd match-mate-server-p13
 ```
 
 ### 2. Install Dependencies:
