@@ -1,4 +1,6 @@
 import { Model } from "mongoose";
+import { z } from "zod";
+import { userSchemaValidation } from "./user.validation";
 
 export interface IUser {
   name: string;
@@ -18,3 +20,5 @@ export interface IUserModel extends Model<IUser> {
     jwtIssuedTimestamp: number,
   ): boolean;
 }
+
+export type TUpdateProfile = z.infer<typeof userSchemaValidation.updateProfile>;

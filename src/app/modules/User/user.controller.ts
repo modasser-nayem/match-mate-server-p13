@@ -13,4 +13,18 @@ const getProfile = catchAsync(async (req, res) => {
   });
 });
 
-export const userController = { getProfile };
+const updateProfile = catchAsync(async (req, res) => {
+  const result = await userService.updateProfile({
+    user: req.user,
+    data: req.body,
+  });
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Profile Successfully Updated",
+    data: result,
+  });
+});
+
+export const userController = { getProfile, updateProfile };
