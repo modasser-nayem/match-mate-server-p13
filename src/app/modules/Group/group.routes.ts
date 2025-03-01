@@ -24,23 +24,34 @@ router.post(
 // Get group details
 router.get("/", auth(), groupAuth(), groupController.getGroupDetails);
 
-// Update group
+// Update group - ADMIN
 router.put(
   "/",
   auth(),
+  groupAuth("admin"),
   requestValidate(groupSchemaValidation.updateGroup),
   groupController.updateGroup,
 );
 
 // See group members
-router.get("/members", auth(), groupController.seeGroupMembers);
+router.get("/members", auth(), groupAuth(), groupController.seeGroupMembers);
 
-// Update group member role and remove members
+// Update group member role
 router.put(
-  "/members",
+  "/members/role",
   auth(),
-  requestValidate(groupSchemaValidation.updateGroupMembers),
-  groupController.updateGroupMembers,
+  groupAuth("admin"),
+  requestValidate(groupSchemaValidation.updateGroupMemberRole),
+  groupController.updateGroupMemberRole,
+);
+
+// Remove member from group
+router.delete(
+  "/members/remove",
+  auth(),
+  groupAuth("admin"),
+  requestValidate(groupSchemaValidation.removeGroupMember),
+  groupController.removeGroupMember,
 );
 
 export const groupRoutes = router;

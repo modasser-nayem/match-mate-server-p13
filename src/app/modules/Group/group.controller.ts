@@ -77,8 +77,8 @@ const seeGroupMembers = catchAsync(async (req, res) => {
   });
 });
 
-const updateGroupMembers = catchAsync(async (req, res) => {
-  const result = await groupService.updateGroupMembers({
+const updateGroupMemberRole = catchAsync(async (req, res) => {
+  const result = await groupService.updateGroupMemberRole({
     group: req.group,
     data: req.body,
   });
@@ -86,7 +86,21 @@ const updateGroupMembers = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: result.message,
+    message: "Successfully Update Role",
+    data: result,
+  });
+});
+
+const removeGroupMember = catchAsync(async (req, res) => {
+  const result = await groupService.removeGroupMember({
+    group: req.group,
+    data: req.body,
+  });
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Successfully Removed From The Group",
     data: result,
   });
 });
@@ -98,5 +112,6 @@ export const groupController = {
   getGroupDetails,
   updateGroup,
   seeGroupMembers,
-  updateGroupMembers,
+  updateGroupMemberRole,
+  removeGroupMember,
 };

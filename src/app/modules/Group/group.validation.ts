@@ -27,10 +27,22 @@ const updateGroup = z.object({
     .optional(),
 });
 
-const updateGroupMembers = z.object({});
+const updateGroupMemberRole = z.object({
+  user_id: z
+    .string({ required_error: "user_id is required" })
+    .refine((value) => value !== "", { message: "user_id is required" }),
+  role: z.enum(["admin"], { required_error: "role is required" }),
+});
+
+const removeGroupMember = z.object({
+  user_id: z
+    .string({ required_error: "user_id is required" })
+    .refine((value) => value !== "", { message: "user_id is required" }),
+});
 
 export const groupSchemaValidation = {
   createGroup,
   updateGroup,
-  updateGroupMembers,
+  updateGroupMemberRole,
+  removeGroupMember,
 };

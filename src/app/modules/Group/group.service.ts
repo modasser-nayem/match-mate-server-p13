@@ -2,8 +2,9 @@ import { JwtPayload } from "jsonwebtoken";
 import {
   IGroupMember,
   TCreateGroup,
+  TRemoveGroupMember,
   TUpdateGroup,
-  TUpdateGroupMembers,
+  TUpdateGroupMemberRole,
 } from "./group.interface";
 import { JwtGroupPayload } from "../../interface";
 import mongoose, { startSession } from "mongoose";
@@ -114,27 +115,76 @@ const updateGroup = async (payload: {
   group: JwtGroupPayload;
   data: TUpdateGroup;
 }) => {
-  return {
-    message: "updateGroup",
-    payload,
-  };
+  const result = await Group.findByIdAndUpdate(
+    payload.group.groupId,
+    payload.data,
+    { new: true },
+  );
+
+  return result;
 };
 
 const seeGroupMembers = async (payload: { group: JwtGroupPayload }) => {
-  return {
-    message: "seeGroupMembers",
-    payload,
-  };
+  const result = await GroupMember.find(
+    { group_id: payload.group.groupId },
+    { user_id: 1, role: 1, join_at: 1, _id: 0 },
+  )
+    .populate("user_id", "name")
+    .lean();
+
+  const formattedResult = result.map((member) => {
+    const user = member.user_id as unknown as { _id: string; name: string };
+
+    return {
+      user_id: user?._id.toString(),
+      name: user?.name,
+      role: member.role,
+      join_at: member.join_at,
+    };
+  });
+
+  return formattedResult;
 };
 
-const updateGroupMembers = async (payload: {
+const updateGroupMemberRole = async (payload: {
   group: JwtGroupPayload;
-  data: TUpdateGroupMembers;
+  data: TUpdateGroupMemberRole;
 }) => {
-  return {
-    message: "updateGroupMembers",
-    payload,
-  };
+  if (payload.group.userId === payload.data.user_id) {
+    throw new AppError(400, "You can't update yourself");
+  }
+
+  const result = await GroupMember.findOneAndUpdate(
+    { user_id: payload.data.user_id, group_id: payload.group.groupId },
+    { role: payload.data.role },
+    { new: true },
+  );
+
+  if (!result) {
+    throw new AppError(404, "Member not found!");
+  }
+
+  return result;
+};
+
+const removeGroupMember = async (payload: {
+  group: JwtGroupPayload;
+  data: TRemoveGroupMember;
+}) => {
+  const result = await GroupMember.findOneAndDelete({
+    user_id: payload.data.user_id,
+    group_id: payload.group.groupId,
+    role: { $ne: "admin" },
+  });
+
+  if (!result) {
+    throw new AppError(
+      403,
+      "You do not have permission to update this resource.",
+    );
+  }
+
+  return result;
 };
 
 export const groupService = {
@@ -144,5 +194,6 @@ export const groupService = {
   getGroupDetails,
   updateGroup,
   seeGroupMembers,
-  updateGroupMembers,
+  updateGroupMemberRole,
+  removeGroupMember,
 };

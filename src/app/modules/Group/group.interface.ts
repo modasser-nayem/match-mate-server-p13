@@ -21,6 +21,10 @@ export type TCreateGroup = z.infer<typeof groupSchemaValidation.createGroup>;
 
 export type TUpdateGroup = z.infer<typeof groupSchemaValidation.createGroup>;
 
-export type TUpdateGroupMembers = z.infer<
-  typeof groupSchemaValidation.createGroup
+export type TUpdateGroupMemberRole = z.infer<
+  typeof groupSchemaValidation.updateGroupMemberRole
+>;
+
+export type TRemoveGroupMember = z.infer<
+  typeof groupSchemaValidation.removeGroupMember
 >;
