@@ -3,6 +3,7 @@ import { auth } from "../../middlewares/auth";
 import requestValidate from "../../middlewares/requestValidation";
 import { groupSchemaValidation } from "./group.validation";
 import { groupController } from "./group.controller";
+import { groupAuth } from "../../middlewares/groupAuth";
 
 const router = Router();
 
@@ -21,7 +22,7 @@ router.post(
 );
 
 // Get group details
-router.get("/", auth(), groupController.getGroupDetails);
+router.get("/", auth(), groupAuth(), groupController.getGroupDetails);
 
 // Update group
 router.put(
