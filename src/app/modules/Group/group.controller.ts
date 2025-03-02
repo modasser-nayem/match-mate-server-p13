@@ -105,6 +105,62 @@ const removeGroupMember = catchAsync(async (req, res) => {
   });
 });
 
+// ============ Group Invitation ===============
+const sendGroupInvite = catchAsync(async (req, res) => {
+  const result = await groupService.sendGroupInvite({
+    group: req.group,
+    data: req.body,
+  });
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Successfully Send Invitation",
+    data: result,
+  });
+});
+
+const acceptGroupInvitation = catchAsync(async (req, res) => {
+  const result = await groupService.acceptGroupInvitation({
+    user: req.user,
+    data: req.body,
+  });
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Now you'r joined the group",
+    data: result,
+  });
+});
+
+const seeMyGroupsInvitations = catchAsync(async (req, res) => {
+  const result = await groupService.seeMyGroupsInvitations({
+    user: req.user,
+  });
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Successfully retrieved your group invitations",
+    data: result,
+  });
+});
+
+const cancelGroupInvitation = catchAsync(async (req, res) => {
+  const result = await groupService.cancelGroupInvitation({
+    user: req.user,
+    invitation_id: req.params.id,
+  });
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Successfully cancel invitation",
+    data: result,
+  });
+});
+
 export const groupController = {
   getUserJoinedGroups,
   groupLogin,
@@ -114,4 +170,8 @@ export const groupController = {
   seeGroupMembers,
   updateGroupMemberRole,
   removeGroupMember,
+  sendGroupInvite,
+  acceptGroupInvitation,
+  seeMyGroupsInvitations,
+  cancelGroupInvitation,
 };

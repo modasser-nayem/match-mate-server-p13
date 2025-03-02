@@ -40,9 +40,23 @@ const removeGroupMember = z.object({
     .refine((value) => value !== "", { message: "user_id is required" }),
 });
 
+const sendGroupInvite = z.object({
+  invite_user_id: z
+    .string({ required_error: "invite_user_id is required" })
+    .refine((value) => value !== "", { message: "invite_user_id is required" }),
+});
+
+const acceptGroupInvitation = z.object({
+  invite_token: z
+    .string({ required_error: "invite_token is required" })
+    .refine((value) => value !== "", { message: "invite_token is required" }),
+});
+
 export const groupSchemaValidation = {
   createGroup,
   updateGroup,
   updateGroupMemberRole,
   removeGroupMember,
+  sendGroupInvite,
+  acceptGroupInvitation,
 };

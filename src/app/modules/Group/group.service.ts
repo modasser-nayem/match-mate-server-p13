@@ -1,17 +1,25 @@
 import { JwtPayload } from "jsonwebtoken";
 import {
   IGroupMember,
+  TAcceptGroupInvite,
   TCreateGroup,
   TRemoveGroupMember,
+  TSendGroupInvite,
   TUpdateGroup,
   TUpdateGroupMemberRole,
 } from "./group.interface";
 import { JwtGroupPayload } from "../../interface";
 import mongoose, { startSession } from "mongoose";
 import AppError from "../../errors/AppError";
-import { Group, GroupMember } from "./group.model";
-import { createGroupAccessToken } from "../../utils/jwtToken";
+import { Group, GroupInvite, GroupMember } from "./group.model";
+import {
+  createGroupAccessToken,
+  createGroupInviteToken,
+  verifyGroupInviteToken,
+} from "../../utils/jwtToken";
+import { User } from "../User/user.model";
 
+// ============ Group ===============
 const getUserJoinedGroups = async (payload: { user: JwtPayload }) => {
   const result = await GroupMember.aggregate([
     { $match: { user_id: new mongoose.Types.ObjectId(payload.user.id) } },
@@ -124,6 +132,7 @@ const updateGroup = async (payload: {
   return result;
 };
 
+// ============ Group Member ===============
 const seeGroupMembers = async (payload: { group: JwtGroupPayload }) => {
   const result = await GroupMember.find(
     { group_id: payload.group.groupId },
@@ -187,6 +196,136 @@ const removeGroupMember = async (payload: {
   return result;
 };
 
+// ============ Group Invitation ===============
+const sendGroupInvite = async (payload: {
+  group: JwtGroupPayload;
+  data: TSendGroupInvite;
+}) => {
+  const data = {
+    group_id: payload.group.groupId,
+    invite_by: payload.group.userId,
+    invite_to: payload.data.invite_user_id,
+    invite_at: new Date().toISOString(),
+  };
+
+  if (!(await User.findById(payload.data.invite_user_id))) {
+    throw new AppError(404, "User not found!");
+  }
+
+  if (
+    await GroupMember.findOne({
+      group_id: payload.group.groupId,
+      user_id: payload.data.invite_user_id,
+    })
+  ) {
+    throw new AppError(400, "This member already exist in the group");
+  }
+
+  await GroupInvite.updateOne(
+    {
+      group_id: data.group_id,
+      invite_by: data.invite_by,
+      invite_to: data.invite_to,
+    },
+    data,
+    { upsert: true },
+  );
+
+  const inviteToken = createGroupInviteToken(data);
+
+  return { invite_token: inviteToken };
+};
+
+const acceptGroupInvitation = async (payload: {
+  user: JwtPayload;
+  data: TAcceptGroupInvite;
+}) => {
+  const decoded = verifyGroupInviteToken(payload.data.invite_token);
+
+  // check acceptable user and invited user same
+  if (payload.user.id !== decoded.invite_to) {
+    throw new AppError(400, "Invalid accept request");
+  }
+
+  // checking "invite_by" is member of the group
+  if (
+    !(await GroupMember.findOne({
+      group_id: decoded.group_id,
+      user_id: decoded.invite_by,
+    }))
+  ) {
+    throw new AppError(400, "Token not provide by group member");
+  }
+
+  const session = await mongoose.startSession();
+
+  try {
+    session.startTransaction();
+
+    // add group member
+    const newMember = await GroupMember.create(
+      [
+        {
+          group_id: decoded.group_id,
+          user_id: decoded.invite_to,
+          role: "member",
+          join_at: new Date().toISOString(),
+        },
+      ],
+      { session },
+    );
+
+    await GroupInvite.deleteOne(
+      { group_id: decoded.group_id, invite_to: decoded.invite_to },
+      { session },
+    );
+
+    await session.commitTransaction();
+    await session.endSession();
+
+    return newMember;
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (error) {
+    await session.abortTransaction();
+    await session.endSession();
+    throw new AppError(500, "Failed accept request, try again");
+  }
+};
+
+const seeMyGroupsInvitations = async (payload: { user: JwtPayload }) => {
+  const sending_invitations = await GroupInvite.find({
+    invite_by: payload.user.id,
+  });
+
+  const acceptable_invitations = await GroupInvite.find({
+    invite_to: payload.user.id,
+  });
+
+  return { sending_invitations, acceptable_invitations };
+};
+
+const cancelGroupInvitation = async (payload: {
+  user: JwtPayload;
+  invitation_id: string;
+}) => {
+  /**
+   * check invitation is valid
+   * delete invitation
+   */
+
+  const result = await GroupInvite.findOneAndDelete({
+    _id: payload.invitation_id,
+    $or: [{ invite_by: payload.user.id }, { invite_to: payload.user.id }],
+  });
+
+  if (!result) {
+    throw new AppError(400, "Failed to cancel invitation, try again");
+  }
+
+  return result;
+};
+
 export const groupService = {
   getUserJoinedGroups,
   groupLogin,
@@ -196,4 +335,8 @@ export const groupService = {
   seeGroupMembers,
   updateGroupMemberRole,
   removeGroupMember,
+  sendGroupInvite,
+  acceptGroupInvitation,
+  seeMyGroupsInvitations,
+  cancelGroupInvitation,
 };

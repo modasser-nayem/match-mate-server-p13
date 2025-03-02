@@ -1,6 +1,7 @@
 import { model, Schema } from "mongoose";
-import { IGroup, IGroupMember } from "./group.interface";
+import { IGroup, IGroupInvite, IGroupMember } from "./group.interface";
 
+// ============ Group ===============
 const groupSchema = new Schema<IGroup>(
   {
     name: {
@@ -22,6 +23,7 @@ const groupSchema = new Schema<IGroup>(
 
 export const Group = model<IGroup>("Group", groupSchema);
 
+// ============ GroupMember ===============
 const groupMemberSchema = new Schema<IGroupMember>({
   user_id: {
     type: Schema.ObjectId,
@@ -49,4 +51,32 @@ const groupMemberSchema = new Schema<IGroupMember>({
 export const GroupMember = model<IGroupMember>(
   "GroupMember",
   groupMemberSchema,
+);
+
+// ============ GroupInvite ===============
+const groupInviteSchema = new Schema<IGroupInvite>({
+  group_id: {
+    type: Schema.ObjectId,
+    ref: "Group",
+    required: true,
+  },
+  invite_to: {
+    type: Schema.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  invite_by: {
+    type: Schema.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  invite_at: {
+    type: String,
+    required: true,
+  },
+});
+
+export const GroupInvite = model<IGroupInvite>(
+  "GroupInvite",
+  groupInviteSchema,
 );

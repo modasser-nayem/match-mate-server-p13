@@ -54,4 +54,27 @@ router.delete(
   groupController.removeGroupMember,
 );
 
+// Send group invitation
+router.post(
+  "/invite",
+  auth(),
+  groupAuth(),
+  requestValidate(groupSchemaValidation.sendGroupInvite),
+  groupController.sendGroupInvite,
+);
+
+// Accept group invitation
+router.get(
+  "/invite",
+  auth(),
+  requestValidate(groupSchemaValidation.acceptGroupInvitation),
+  groupController.acceptGroupInvitation,
+);
+
+// see my group invitations
+router.get("/invite", auth(), groupController.seeMyGroupsInvitations);
+
+// Cancel Group invitation
+router.delete("/invite/:id", auth(), groupController.cancelGroupInvitation);
+
 export const groupRoutes = router;

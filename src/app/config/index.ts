@@ -13,4 +13,6 @@ export default {
   JWT_GROUP_ACCESS_SECRET: process.env.JWT_GROUP_ACCESS_SECRET as string,
   JWT_GROUP_ACCESS_EXPIRES_IN: process.env
     .JWT_GROUP_ACCESS_EXPIRES_IN as string,
+  GROUP_INVITE_SECRET: process.env.GROUP_INVITE_SECRET as string,
+  GROUP_INVITE_EXPIRES_IN: process.env.GROUP_INVITE_EXPIRES_IN as string,
 };
