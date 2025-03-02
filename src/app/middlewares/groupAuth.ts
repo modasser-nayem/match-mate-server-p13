@@ -33,9 +33,12 @@ export const groupAuth = (...roles: TGroupMemberRole[]) =>
     }
 
     // check user exist on this group
-    const groupMember = await GroupMember.findOne({ group_id: groupId });
+    const groupMember = await GroupMember.findOne({
+      group_id: groupId,
+      user_id: userId,
+    });
 
-    if (groupMember?.user_id.toString() !== userId) {
+    if (!groupMember) {
       throwError();
       console.log("error-hear // 40");
     }
@@ -44,6 +47,7 @@ export const groupAuth = (...roles: TGroupMemberRole[]) =>
       throwError();
       console.log("error-hear // 45");
     }
+
     req.group = decoded;
     next();
   });

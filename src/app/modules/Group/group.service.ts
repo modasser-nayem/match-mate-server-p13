@@ -247,6 +247,16 @@ const acceptGroupInvitation = async (payload: {
     throw new AppError(400, "Invalid accept request");
   }
 
+  // checking invitation already accepted
+  if (
+    await GroupMember.findOne({
+      group_id: decoded.group_id,
+      user_id: decoded.invite_to,
+    })
+  ) {
+    throw new AppError(400, "invitation already accepted");
+  }
+
   // checking "invite_by" is member of the group
   if (
     !(await GroupMember.findOne({

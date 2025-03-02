@@ -64,8 +64,8 @@ router.post(
 );
 
 // Accept group invitation
-router.get(
-  "/invite",
+router.post(
+  "/invite/accept",
   auth(),
   requestValidate(groupSchemaValidation.acceptGroupInvitation),
   groupController.acceptGroupInvitation,
