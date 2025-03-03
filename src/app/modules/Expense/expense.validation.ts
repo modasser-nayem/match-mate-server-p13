@@ -41,4 +41,14 @@ const updateExpense = z.object({
     .optional(),
 });
 
-export const expenseSchemaValidation = { addExpense, updateExpense };
+const updateExpenseStatus = z.object({
+  status: z.enum(["approved", "rejected"], {
+    required_error: "status is required",
+  }),
+});
+
+export const expenseSchemaValidation = {
+  addExpense,
+  updateExpense,
+  updateExpenseStatus,
+};

@@ -1,6 +1,6 @@
 import AppError from "../../errors/AppError";
 import { JwtGroupPayload } from "../../interface";
-import { TAddExpense } from "./expense.interface";
+import { TAddExpense, TUpdateExpenseStatus } from "./expense.interface";
 import { Expense } from "./expense.model";
 
 const addExpense = async (payload: {
@@ -56,11 +56,13 @@ const updateExpense = async (payload: {
       payload.expenseId,
       { ...payload.data, status: "pending" },
       {
+        projection: { __v: 0 },
         new: true,
       },
     );
   } else {
     result = await Expense.findByIdAndUpdate(payload.expenseId, payload.data, {
+      projection: { __v: 0 },
       new: true,
     });
   }
@@ -68,4 +70,100 @@ const updateExpense = async (payload: {
   return result;
 };
 
-export const expensesService = { addExpense, updateExpense };
+const getAllExpenses = async (payload: { group: JwtGroupPayload }) => {
+  const result = await Expense.find(
+    { group_id: payload.group.groupId, status: "approved" },
+    { __v: 0 },
+  );
+
+  return result;
+};
+
+const getMyExpenses = async (payload: { group: JwtGroupPayload }) => {
+  const result = await Expense.find(
+    {
+      group_id: payload.group.groupId,
+      user_id: payload.group.userId,
+    },
+    { __v: 0 },
+  );
+
+  return result;
+};
+
+const updateExpenseStatus = async (payload: {
+  group: JwtGroupPayload;
+  expense_id: string;
+  data: TUpdateExpenseStatus;
+}) => {
+  const expense = await Expense.findById(payload.expense_id);
+
+  if (!expense) {
+    throw new AppError(404, "Expense not found!");
+  }
+
+  // ensure this expense belong to this group.
+  if (expense.group_id.toString() !== payload.group.groupId) {
+    throw new AppError(403, "Expense not belong to this group");
+  }
+
+  // check expense status
+  if (expense.status === "approved" || expense.status === "rejected") {
+    throw new AppError(
+      400,
+      `This an ${expense.status} expense, you can't change status`,
+    );
+  }
+
+  const result = await Expense.findByIdAndUpdate(
+    payload.expense_id,
+    payload.data,
+    {
+      projection: { __v: 0 },
+      new: true,
+    },
+  );
+
+  return result;
+};
+
+const deleteExpense = async (payload: {
+  group: JwtGroupPayload;
+  expense_id: string;
+}) => {
+  const expense = await Expense.findById(payload.expense_id);
+
+  if (!expense) {
+    throw new AppError(404, "Expense not found!");
+  }
+
+  // ensure this expense belong to correct user and group.
+  if (
+    expense.user_id.toString() !== payload.group.userId ||
+    expense.group_id.toString() !== payload.group.groupId
+  ) {
+    throw new AppError(
+      403,
+      "This expense is not belongs to this user or group",
+    );
+  }
+
+  // check is approved
+  if (expense.status === "approved") {
+    throw new AppError(400, "This an Approved expense, you can't delete it");
+  }
+
+  // delete expense
+  await Expense.deleteOne({ _id: payload.expense_id });
+
+  return null;
+};
+
+export const expensesService = {
+  addExpense,
+  updateExpense,
+  getAllExpenses,
+  getMyExpenses,
+  updateExpenseStatus,
+  deleteExpense,
+};

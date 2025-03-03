@@ -19,3 +19,7 @@ export type TAddExpense = z.infer<typeof expenseSchemaValidation.addExpense>;
 export type TUpdateExpense = z.infer<
   typeof expenseSchemaValidation.updateExpense
 >;
+
+export type TUpdateExpenseStatus = z.infer<
+  typeof expenseSchemaValidation.updateExpenseStatus
+>;

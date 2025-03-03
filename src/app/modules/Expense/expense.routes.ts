@@ -26,15 +26,21 @@ route.put(
 );
 
 // get all expenses
-route.get("/", auth(), groupAuth());
+route.get("/", auth(), groupAuth(), expensesController.getAllExpenses);
 
 // get my expenses
-route.get("/my", auth(), groupAuth());
+route.get("/my", auth(), groupAuth(), expensesController.getMyExpenses);
 
 // Approve/reject an expense
-route.put("/:id/status", auth(), groupAuth("admin"));
+route.put(
+  "/status/:id",
+  auth(),
+  groupAuth("admin"),
+  requestValidate(expenseSchemaValidation.updateExpenseStatus),
+  expensesController.updateExpenseStatus,
+);
 
 // Delete expense
-route.delete("/", auth(), groupAuth());
+route.delete("/:id", auth(), groupAuth(), expensesController.deleteExpense);
 
 export const expenseRoutes = route;
